@@ -1,0 +1,12 @@
+lastupdatecheck: 0
+recentrepos:
+- /home/will/dotfiles
+- /home/will/ma-workspace
+- /home/will/ma-workspace/lib/react
+- /home/will/.config
+- /home/will/ma-workspace/lib/sdk
+- /home/will/ma-workspace/lib/bundle-ma
+startuppopupversion: 5
+customcommandshistory:
+- q
+hidecommandlog: false

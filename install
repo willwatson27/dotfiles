@@ -1,0 +1,75 @@
+#!/bin/bash
+
+# Packages to install
+packages=(stow tmux neovim fd-find unzip)
+#fd-find is for telescope speed improvements
+#unzip is for installing oh-my-posh
+
+# Dotfile directories
+stowables=(bash bin nvim tmux lazygit)
+
+######################################################
+missing=()
+for package in "${packages[@]}"; do
+  if ! dpkg-query --status "$package" 2>/dev/null | grep -q "installed"; then
+    missing+=("$package")
+  fi
+done
+if [ ${#missing[@]} -gt 0 ]; then
+  echo -e "\033[1;33mThis will install the following packages:\033[0m"
+  for package in "${missing[@]}"; do
+    echo -e "\033[38;5;250m$package\033[0m"
+  done
+  read -p $'\033[1;37mDo you want to continue? \033[38;5;250m(y/n)\033[0m: ' -n 1 -r
+  echo
+  if [[ $REPLY =~ ^[Yy]$ ]]; then
+    sudo apt-get update
+    sudo apt-get install "${missing[@]}"
+  else
+    echo "Exiting install script."
+    exit
+  fi
+fi
+
+######################################################
+
+# Navigate to the dotfiles directory
+cd ~/dotfiles
+for dir in "${stowables[@]}"; do
+   stow "$dir"
+done
+
+############################
+## Oh My Posh - Prompt themes for WSL
+############################
+if ! test -f /usr/local/bin/oh-my-posh; then
+  sudo wget https://github.com/JanDeDobbeleer/oh-my-posh/releases/latest/download/posh-linux-amd64 -O /usr/local/bin/oh-my-posh
+  sudo chmod +x /usr/local/bin/oh-my-posh
+  mkdir ~/.poshthemes
+  wget https://github.com/JanDeDobbeleer/oh-my-posh/releases/latest/download/themes.zip -O ~/.poshthemes/themes.zip
+  unzip -o ~/.poshthemes/themes.zip -d ~/.poshthemes
+  chmod u+rw ~/.poshthemes/*.omp.*
+  rm ~/.poshthemes/themes.zip
+fi
+
+############################
+## Install lazy git
+############################
+# We can test the lazygit version with lazygit -v, dkpg could work too.
+if ! test -f /usr/local/bin/lazygit; then
+  LAZYGIT_VERSION=$(curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep -Po '"tag_name": "v\K[0-35.]+')
+  curl -Lo lazygit.tar.gz "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_${LAZYGIT_VERSION}_Linux_x86_64.tar.gz"
+  sudo tar xf lazygit.tar.gz -C /usr/local/bin lazygit
+fi
+
+############################
+## Install packer - NVIM package manager
+############################
+if [ ! -d ~/.local/share/nvim/site/pack/packer/start/packer.nvim ]; then
+  git clone --depth 1 https://github.com/wbthomason/packer.nvim ~/.local/share/nvim/site/pack/packer/start/packer.nvim
+fi
+
+# Install zk cli - download latest binary to bin folder
+# Should we use a gitwork tree and add notes here or should we have it clone a repo if it doesn't exist
+
+echo 'Setup Complete!'

@@ -1,0 +1,16 @@
+#!/bin/bash
+SESSION_NAME="MA"
+SESSION_DIR="$HOME/ma-workspace"
+
+tmux has-session -t $SESSION_NAME 2>/dev/null
+if [ $? == 1 ] ; then
+    tmux new-session -d -c $SESSION_DIR -s $SESSION_NAME -n 'nvim'
+    tmux send-keys -t $SESSION_NAME:nvim 'clear ; v .' C-m
+
+    tmux new-window -ad -c $SESSION_DIR -t $SESSION_NAME -n 'node'
+    tmux send-keys -t $SESSION_NAME:node 'clear; node server/index.js' C-m
+
+    sleep 1
+fi
+
+tmux attach-session -t $SESSION_NAME

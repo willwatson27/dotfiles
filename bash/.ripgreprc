@@ -3,4 +3,8 @@
 
 # or
 --glob
-**/*.lua
+!**/dist/**/*.lua
+
+--glob
+!**/__test__/*
+

@@ -1,14 +1,19 @@
 #!/bin/bash
-
-# Packages to install
-packages=(stow tmux neovim fd-find unzip)
+############################# Stow Folders #####################################
+stowables=(bash bin nvim tmux lazygit)
+########################## Packages to install #################################
+packages=(stow tmux neovim fzf fd-find ripgrep unzip)
 #fd-find is for telescope speed improvements
 #unzip is for installing oh-my-posh
 
-# Dotfile directories
-stowables=(bash bin nvim tmux lazygit)
+# There is a version of fzf being built by telescope-fzf-native,
+# I think istalling it here might fix some other stuff, we'll see.
+################################################################################
 
-######################################################
+
+############################
+## Install packages
+############################
 missing=()
 for package in "${packages[@]}"; do
   if ! dpkg-query --status "$package" 2>/dev/null | grep -q "installed"; then
@@ -31,9 +36,9 @@ if [ ${#missing[@]} -gt 0 ]; then
   fi
 fi
 
-######################################################
-
-# Navigate to the dotfiles directory
+############################
+## Stow folders
+############################
 cd ~/dotfiles
 for dir in "${stowables[@]}"; do
    stow "$dir"
@@ -72,4 +77,4 @@ fi
 # Install zk cli - download latest binary to bin folder
 # Should we use a gitwork tree and add notes here or should we have it clone a repo if it doesn't exist
 
-echo 'Setup Complete!'
+echo "Setup complete."

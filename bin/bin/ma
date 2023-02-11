@@ -1,16 +1,23 @@
 #!/bin/bash
+
 SESSION_NAME="MA"
 SESSION_DIR="$HOME/ma-workspace"
 
 tmux has-session -t $SESSION_NAME 2>/dev/null
 if [ $? == 1 ] ; then
-    tmux new-session -d -c $SESSION_DIR -s $SESSION_NAME -n 'nvim'
-    tmux send-keys -t $SESSION_NAME:nvim 'clear ; v .' C-m
+    tmux new-session -d -c $SESSION_DIR -s $SESSION_NAME -n 'root'
 
-    tmux new-window -ad -c $SESSION_DIR -t $SESSION_NAME -n 'node'
-    tmux send-keys -t $SESSION_NAME:node 'clear; node server/index.js' C-m
+    tmux send-keys -t $SESSION_NAME:root 'clear ; v .' C-m
 
-    sleep 1
+    tmux split-window -c $SESSION_DIR -h -t $SESSION_NAME -l 56
+    tmux send-keys -t $SESSION_NAME:root 'clear ; npm start' C-m
+
+    tmux split-window -c $SESSION_DIR -v -t $SESSION_NAME -p 10
+    tmux send-keys -t $SESSION_NAME:root 'clear; npm run server' C-m
+
+    tmux select-pane -t $SESSION_NAME:1.1
+
+    # sleep 1
 fi
 
 tmux attach-session -t $SESSION_NAME

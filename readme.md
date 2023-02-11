@@ -14,11 +14,16 @@ Download a nerd font, put the files in the windows fonts folder, and add it to  
 
 ## Clone the repo
 `git clone git@github.com:willwatson27/dotfiles.git ~/dotfiles`
-
 ## Run the install scipt
 `~/dotfiles/install`
 
+## ZK Notes
+#### Clone the repo
+`git clone git@github.com:willwatson27/notes.git ~/notes`
+#### Download the latest relelease to the bin folder
+`https://github.com/mickael-menu/zk/releases/latest`
+
+
 ## Dual Key Remap
 Create shortcut to dual-key-remap and put it in the windows startup folder
-
 

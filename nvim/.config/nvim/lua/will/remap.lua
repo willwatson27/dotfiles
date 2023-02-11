@@ -16,4 +16,4 @@ vim.keymap.set({"n", "v"}, "<leader>d", [["_d]])
 
 -- replace all at curson
 vim.keymap.set("n", "<leader>s", [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><Left>]])
-vim.keymap.set("n", "<leader>b", [[:!npx bundle; npx bundle -p<CR>]])
+vim.keymap.set("n", "<leader>b", [[:!npm run build<CR>]])

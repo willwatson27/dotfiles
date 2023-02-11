@@ -74,7 +74,5 @@ if [ ! -d ~/.local/share/nvim/site/pack/packer/start/packer.nvim ]; then
   git clone --depth 1 https://github.com/wbthomason/packer.nvim ~/.local/share/nvim/site/pack/packer/start/packer.nvim
 fi
 
-# Install zk cli - download latest binary to bin folder
-# Should we use a gitwork tree and add notes here or should we have it clone a repo if it doesn't exist
 
 echo "Setup complete."

@@ -5,14 +5,14 @@ return require('packer').startup(function(use)
     use 'wbthomason/packer.nvim'
 
     use { 'kdheepak/lazygit.nvim' }
-    use { 'lewis6991/gitsigns.nvim', tag = 'release' } --Used by gutter/status bar, not  lazygit?
+    use { 'lewis6991/gitsigns.nvim' } --Used by gutter/status bar, not  lazygit?
 
     -- Fuzzy Find
-    use { 'nvim-telescope/telescope.nvim', tag = '0.1.0',
+    use { 'nvim-telescope/telescope.nvim',
         requires = { { 'nvim-lua/plenary.nvim' } }
     }
 
-    use { 'nvim-telescope/telescope-fzf-native.nvim', run = 'make' }
+    -- use { 'nvim-telescope/telescope-fzf-native.nvim', run = 'make' }
     use { 'nvim-telescope/telescope-file-browser.nvim' }
     use('nvim-lua/popup.nvim')
 
@@ -56,9 +56,13 @@ return require('packer').startup(function(use)
     }
     -- Theme
     use 'folke/tokyonight.nvim'
-    use({ 'nvim-lualine/lualine.nvim', requires = { 'kyazdani42/nvim-web-devicons', opt = true } })
+    use({ 'nvim-lualine/lualine.nvim', requires = { 'kyazdani42/nvim-web-devicons' } })
 
     use('mickael-menu/zk-nvim') -- Notes
     use('ThePrimeagen/harpoon')
+    -- markdown-preview install with npm
+
+    use({ "iamcco/markdown-preview.nvim", run = "cd app && npm install", setup = function() vim.g.mkdp_filetypes = {
+            "markdown" } end, ft = { "markdown" }, })
     use('mbbill/undotree')
 end)

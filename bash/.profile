@@ -30,4 +30,4 @@ export ZK_NOTEBOOK_DIR="$HOME/notes"
 
 export RIPGREP_CONFIG_PATH="$HOME/.ripgreprc"
 
-eval "$(oh-my-posh init bash --config ~/night-owl.omp.json)"
+eval "$(oh-my-posh init bash --config ~/dotfiles/night-owl.omp.json)"

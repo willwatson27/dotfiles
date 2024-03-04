@@ -2,7 +2,7 @@
 ############################# Stow Folders #####################################
 stowables=(bash bin nvim tmux lazygit)
 ########################## Packages to install #################################
-packages=(stow tmux neovim fzf fd-find ripgrep unzip)
+packages=(stow tmux neovim fzf fd-find ripgrep unzip build-essential)
 #fd-find is for telescope speed improvements
 #unzip is for installing oh-my-posh
 
@@ -15,7 +15,6 @@ packages=(stow tmux neovim fzf fd-find ripgrep unzip)
 ## Install packages
 ############################
 sudo add-apt-repository ppa:neovim-ppa/unstable
-sudo apt-get install build-essential
 missing=()
 for package in "${packages[@]}"; do
   if ! dpkg-query --status "$package" 2>/dev/null | grep -q "installed"; then
@@ -64,12 +63,15 @@ echo "Installing Lazygit"
 ############################
 ## Install lazy git
 ############################
-# We can test the lazygit version with lazygit -v, dkpg could work too.
+# We can test the lazygit version with lazygit -v
 if ! test -f /usr/local/bin/lazygit; then
-  LAZYGIT_VERSION=$(curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep -Po '"tag_name": "v\K[0-35.]+')
-  curl -Lo lazygit.tar.gz "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_${LAZYGIT_VERSION}_Linux_x86_64.tar.gz"
-  sudo tar xf lazygit.tar.gz -C /usr/local/bin lazygit
+    LAZYGIT_VERSION=$(curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep -Po '"tag_name": "v\K[^"]*')
+    curl -Lo lazygit.tar.gz "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_${LAZYGIT_VERSION}_Linux_x86_64.tar.gz"
+    tar xf lazygit.tar.gz lazygit
+    sudo install lazygit /usr/local/bin
+    rm -rf lazygit lazygit.tar.gz
 fi
+
 
 echo "Installing Packer"
 ############################

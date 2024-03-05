@@ -1,23 +1,28 @@
 #!/bin/bash
 
+##### 1440p #####
+SCREEN_WIDTH="276"
+SCREEN_WIDTH="74"
+#################
+
 SESSION_NAME="MA"
 SESSION_DIR="$HOME/ma-workspace"
+SIDEBAR_WIDTH="56"
+SIDEBAR_VERT="10"
 
 tmux has-session -t $SESSION_NAME 2>/dev/null
 if [ $? == 1 ] ; then
-    tmux new-session -d -c $SESSION_DIR -s $SESSION_NAME -n 'root'
+    tmux new-session -d -c $SESSION_DIR -s $SESSION_NAME -n 'root' -x $SCREEN_WIDTH -y $SCREEN_HEIGHT
 
     tmux send-keys -t $SESSION_NAME:root 'clear ; v .' C-m
 
-    tmux split-window -c $SESSION_DIR -h -t $SESSION_NAME -l 56
+    tmux split-window -c $SESSION_DIR -h -t $SESSION_NAME -l $SIDEBAR_WIDTH
     tmux send-keys -t $SESSION_NAME:root 'clear ; npm start' C-m
 
-    tmux split-window -c $SESSION_DIR -v -t $SESSION_NAME -p 10
+    tmux split-window -c $SESSION_DIR -v -t $SESSION_NAME -p $SIDEBAR_VERT
     tmux send-keys -t $SESSION_NAME:root 'clear; npm run server' C-m
 
     tmux select-pane -t $SESSION_NAME:1.1
-
-    # sleep 1
 fi
 
 tmux attach-session -t $SESSION_NAME

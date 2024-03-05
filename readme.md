@@ -1,6 +1,8 @@
 # WSL Environment Setup
 
-### Multiple WSL Instances
+
+<details>
+    <summary><b>Setting up multiple WSL instances</b></summary>
 
 Export a backup and unregister the current WSL instance
 ```powershell
@@ -25,38 +27,17 @@ Import and run the old distro
 wsl --import Ubuntu-Main C:\wsl-images\Ubuntu-Main C:\wsl-images\Ubuntu-Main.tar.gz
 wsl -d Ubuntu-Main
 ```
-
-### Set default user
-In the new WSL instance login with `login lx` and add the following to `/etc/wsl.conf`
-```
-[user]
-default=lx
-```
-
-### Configure Github
-```bash
-git config --global user.name "Will Watson"
-git config --global user.email "willwatson27@gmail.com"
-mkdir ~/.ssh ; cd ~/.ssh
-ssh-keygen -o -t rsa -C "willwatson27@gmail.com"
-ssh-add -K ~/.ssh/id_rsa
-cat id_rsa.pub
-```
-
-Clone the repo
-```bash
-git clone git@github.com:willwatson27/dotfiles.git
-```
+</details>
 
 ### Configure Windows Terminal
-Install new powershell from windows store, launch it from windows terminal and run
+Install the new Powershell from windows store, launch it from windows terminal and run
 ```ps
 winget install JanDeDobbeleer.OhMyPosh -s winget
 Install-Module -Name Terminal-Icons -Repository PSGallery
 ```
 
-Install `./CaskaydiaCoveNerdFontMono-Regular.ttf` \
-Add these options to the profile for your instance in `settings.json` file for Windows Terminal.
+Add `./assets/CaskaydiaCoveNerdFontMono-Regular.ttf` to windows fonts\
+Edit the `settings.json` in Windows Terminal with these options for the schemes and profiles being used.
 ```json
 {
     "profiles": {
@@ -78,23 +59,32 @@ Add these options to the profile for your instance in `settings.json` file for W
        }
     ]
 }
+
 ```
 
+### Setup dotfiles
+In the WSL instance, login with `login <username>` if you aren't already \
+Clone the repo and run the install script
+```bash
+cd ~ && git clone https://github.com/willwatson27/dotfiles.git
+cd dotfiles
+./install
+```
 
 ### TMUX Plugins
 Start a session with the `tmux` command \
 Press `Ctrl-a` then `I` to install the plugins in `~/.tmux.conf`.
 
 ### Vim Plugins / Language Servers
-Open neovim and install the packages with `:PackerSync` \
+Open neovim with the `v` shortcut and run `:PackerSync` \
 Install language servers with `:Mason`
 
 ### Dual Key Remap
 Create shortcut to `./dual-key-remap/dual-key-remap.exe` and put it in the windows startup folder
 
 ## ZK Notes
-#### Clone the repo
-`git clone git@github.com:willwatson27/notes.git ~/notes`
-#### Download the latest relelease to the bin folder
+Clone the repo \
+`git clone git@github.com:willwatson27/notes.git ~/notes` \
+Download the latest relelease to the bin folder \
 `https://github.com/mickael-menu/zk/releases/latest`
 

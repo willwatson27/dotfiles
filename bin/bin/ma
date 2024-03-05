@@ -2,7 +2,7 @@
 
 ##### 1440p #####
 SCREEN_WIDTH="276"
-SCREEN_WIDTH="74"
+SCREEN_HEIGHT="74"
 #################
 
 SESSION_NAME="MA"

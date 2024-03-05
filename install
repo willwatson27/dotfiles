@@ -1,140 +1,137 @@
 #!/bin/bash
 
-## Check if the current user is root
-if [ "$(id -u)" -eq 0 ]; then
-    echo "WARNING: You are logged in as root."
-    read -p "Are you sure you want to continue? (y/n) " -n 1 -r
-    echo    # (optional) move to a new line
-    if [[ ! $REPLY =~ ^[Yy]$ ]]
-    then
-        [[ "$0" = "$BASH_SOURCE" ]] && exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
+ensure_not_root() {
+    if [ "$(id -u)" -eq 0 ]; then
+        echo "WARNING: You are logged in as root."
+        read -p "Are you sure you want to continue? (y/n) " -n 1 -r
+        echo    # (optional) move to a new line
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            exit 1
+        fi
+        echo "WARNING: You probably don't want to do this."
+        read -p "Are you really sure you want to continue? (y/n) " -n 1 -r
+        echo    # (optional) move to a new line
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            exit 1
+        fi
     fi
-    echo "WARNING: You probably don't want to do this"
-    read -p "Are you really sure you want to continue? (y/n) " -n 1 -r
-    echo    # (optional) move to a new line
-    if [[ ! $REPLY =~ ^[Yy]$ ]]
-    then
-        [[ "$0" = "$BASH_SOURCE" ]] && exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
+}
+
+ensure_default_user() {
+    local user_setting="[user]\ndefault=$USER"
+    if ! grep -qE '^\[user\]$' /etc/wsl.conf; then
+        echo "Adding user default to /etc/wsl.conf"
+        sudo sh -c "echo \"$user_setting\" >> /etc/wsl.conf"
+    elif ! grep -qE "^default=$USER$" /etc/wsl.conf; then
+        echo "Updating user default in /etc/wsl.conf"
+        sudo sed -i "/^\[user\]$/,/^\[/ s/^default=.*/default=$USER/" /etc/wsl.conf
     fi
-fi
+}
 
-## Setting current user as default in WSL config
-if ! grep -qE '^\[user\]$' /etc/wsl.conf; then
-    echo "Adding user default to /etc/wsl.conf"
-    sudo sh -c "echo -e \"\n[user]\ndefault=$USER\" >> /etc/wsl.conf"
-elif ! grep -qE "^default=$USER$" /etc/wsl.conf; then
-    echo "Updating user default in /etc/wsl.conf"
-    sudo sed -i "/^\[user\]$/,/^\[/ s/^default=.*/default=$USER/" /etc/wsl.conf
-fi
+install_packages() {
+    local packages=(stow tmux neovim fzf fd-find ripgrep unzip curl build-essential)
+    #fd-find is for telescope speed improvements
 
+    # There is a version of fzf being built by telescope-fzf-native,
+    # I think istalling it here might fix some other stuff, we'll see.
 
-
-############################
-## Install packages
-packages=(stow tmux neovim fzf fd-find ripgrep unzip build-essential)
-#fd-find is for telescope speed improvements
-#unzip is for installing oh-my-posh
-
-# There is a version of fzf being built by telescope-fzf-native,
-# I think istalling it here might fix some other stuff, we'll see.
-############################
-sudo add-apt-repository -y ppa:neovim-ppa/unstable > /dev/null
-missing=()
-for package in "${packages[@]}"; do
-  if ! dpkg-query --status "$package" 2>/dev/null | grep -q "installed"; then
-    missing+=("$package")
-  fi
-done
-if [ ${#missing[@]} -gt 0 ]; then
-  echo -e "\033[1;33mThis will install the following packages:\033[0m"
-  for package in "${missing[@]}"; do
-    echo -e "\033[38;5;250m$package\033[0m"
-  done
-  read -p $'\033[1;37mDo you want to continue? \033[38;5;250m(y/n)\033[0m: ' -n 1 -r
-  echo
-  if [[ $REPLY =~ ^[Yy]$ ]]; then
-    sudo apt update
-    sudo apt install "${missing[@]}"
-  else
-    echo "Exiting install script."
-    exit
-  fi
-fi
-
-############################
-## Stow folders
-stowables=(bash bin nvim tmux)
-############################
-# Prevent stowing existing files
-backed_up=(".bashrc" ".profile")
-for file in "${backed_up[@]}"; do
-    if [ -f "$HOME/$file" ] && [ ! -L "$HOME/$file" ]; then
-        backup_file="$HOME/.backup$file"
-        echo "Backing up existing $file to $backup_file"
-        mv "$HOME/$file" "$backup_file"
+    if ! grep -R "neovim-ppa/unstable" /etc/apt/sources.list* > /dev/null; then
+        sudo add-apt-repository -y ppa:neovim-ppa/unstable
     fi
-done
+    local missing=()
+    for package in "${packages[@]}"; do
+        if ! dpkg-query --status "$package" &>/dev/null; then
+            missing+=("$package")
+        fi
+    done
+    if [ ${#missing[@]} -gt 0 ]; then
+        echo "This will install the following packages:"
+        printf '%s\n' "${missing[@]}"
+        read -p "Do you want to continue? (y/n): " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            sudo apt update && sudo apt install -y "${missing[@]}"
+        else
+            echo "Exiting install script."
+            exit 0
+        fi
+    fi
+}
 
-cd ~/dotfiles
-for dir in "${stowables[@]}"; do
-   stow -R -d ~/dotfiles -t ~ $dir
-done
+stow_configs() {
+    local backed_up=(".bashrc" ".profile")
+    for file in "${backed_up[@]}"; do
+        if [ -f "$HOME/$file" ] && [ ! -L "$HOME/$file" ]; then
+            local backup_file="$HOME/.backup$file"
+            mv "$HOME/$file" "$backup_file"
+        fi
+    done
 
-############################
-## Oh My Posh - Prompt themes for WSL
-############################
-if ! test -f /usr/local/bin/oh-my-posh; then
-  echo "Installing OhMyPosh"
-  sudo wget https://github.com/JanDeDobbeleer/oh-my-posh/releases/latest/download/posh-linux-amd64 -O /usr/local/bin/oh-my-posh
-  sudo chmod +x /usr/local/bin/oh-my-posh
-  mkdir ~/.poshthemes
-  wget https://github.com/JanDeDobbeleer/oh-my-posh/releases/latest/download/themes.zip -O ~/.poshthemes/themes.zip
-  unzip -o ~/.poshthemes/themes.zip -d ~/.poshthemes
-  chmod u+rw ~/.poshthemes/*.omp.*
-  rm ~/.poshthemes/themes.zip
-fi
+    local stowables=(bash bin nvim tmux)
+    cd ~/dotfiles || exit
+    for dir in "${stowables[@]}"; do
+       stow -R -d ~/dotfiles -t ~ "$dir"
+    done
+}
 
-############################
-## Install packer - NVIM package manager
-############################
-if [ ! -d ~/.local/share/nvim/site/pack/packer/start/packer.nvim ]; then
-    echo "Installing Packer"
-    git clone --depth 1 https://github.com/wbthomason/packer.nvim ~/.local/share/nvim/site/pack/packer/start/packer.nvim
-fi
+install_oh_my_posh() {
+    if [ ! -f /usr/local/bin/oh-my-posh ]; then
+        echo "Installing OhMyPosh"
+        sudo wget -q https://github.com/JanDeDobbeleer/oh-my-posh/releases/latest/download/posh-linux-amd64 -O /usr/local/bin/oh-my-posh
+        sudo chmod +x /usr/local/bin/oh-my-posh
+        mkdir -p ~/.poshthemes
+        wget -q https://github.com/JanDeDobbeleer/oh-my-posh/releases/latest/download/themes.zip -O ~/.poshthemes/themes.zip
+        unzip -o ~/.poshthemes/themes.zip -d ~/.poshthemes && chmod u+rw ~/.poshthemes/*.omp.* && rm ~/.poshthemes/themes.zip
+    fi
+}
 
-############################
-## Install lazy git
-############################
-# We can test the lazygit version with lazygit -v
-if ! test -f /usr/local/bin/lazygit; then
-    echo "Installing Lazygit"
-    LAZYGIT_VERSION=$(curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep -Po '"tag_name": "v\K[^"]*')
-    curl -Lo lazygit.tar.gz "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_${LAZYGIT_VERSION}_Linux_x86_64.tar.gz"
-    tar xf lazygit.tar.gz lazygit
-    sudo install lazygit /usr/local/bin
-    rm -rf lazygit lazygit.tar.gz
-fi
+install_packer_nvim() {
+    if [ ! -d ~/.local/share/nvim/site/pack/packer/start/packer.nvim ]; then
+        echo "Installing Packer for Neovim"
+        git clone --depth 1 https://github.com/wbthomason/packer.nvim ~/.local/share/nvim/site/pack/packer/start/packer.nvim
+    fi
+}
 
-############################
-## Configure Git
-############################
-current_user_name=$(git config --global user.name)
-current_user_email=$(git config --global user.email)
+install_lazygit() {
+    if [ ! -f /usr/local/bin/lazygit ]; then
+        echo "Installing Lazygit"
+        local latest_version=$(curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep -Po '"tag_name": "\K[^"]*')
+        local download_url="https://github.com/jesseduffield/lazygit/releases/download/${latest_version}/lazygit_${latest_version}_Linux_x86_64.tar.gz"
+        curl -Lo lazygit.tar.gz "$download_url"
+        tar xf lazygit.tar.gz lazygit
+        sudo install lazygit /usr/local/bin
+        rm -rf lazygit lazygit.tar.gz
+    fi
+}
 
-read -e -p "Git username: " -i "$current_user_name" user_name
-read -e -p "Git email: " -i "$current_user_email" user_email
+configure_git() {
+    local current_user_name=$(git config --global user.name)
+    local current_user_email=$(git config --global user.email)
 
-git config --global user.name "${user_name}"
-git config --global user.email "${user_email}"
+    read -e -p "Git username: " -i "$current_user_name" user_name
+    read -e -p "Git email: " -i "$current_user_email" user_email
 
-existing_key=$(grep -E -l " ${user_email}$" ~/.ssh/id_rsa.pub 2>/dev/null)
+    git config --global user.name "$user_name"
+    git config --global user.email "$user_email"
 
-if [[ -z $existing_key ]]; then
-  mkdir -p ~/.ssh
-  ssh-keygen -o -t rsa -C "$user_email" -f ~/.ssh/id_rsa
-fi
+    local existing_key=$(grep -E -l " ${user_email}$" ~/.ssh/id_rsa.pub 2>/dev/null)
+    if [[ -z $existing_key ]]; then
+        mkdir -p ~/.ssh
+        ssh-keygen -o -t rsa -C "$user_email" -f ~/.ssh/id_rsa
+    fi
+    echo "PUBLIC KEY:"
+    cat ~/.ssh/id_rsa.pub
+}
 
-echo ""
-echo "PUBLIC KEY:"
-cat ~/.ssh/id_rsa.pub
+ensure_not_root
+ensure_default_user
+install_packages
+stow_configs
+install_oh_my_posh
+install_packer_nvim
+install_lazygit
+configure_git
 
+# Sourcing the updated files to apply changes
+[ -f "$HOME/.bashrc" ] && source "$HOME/.bashrc"
+[ -f "$HOME/.profile" ] && source "$HOME/.profile"

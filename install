@@ -123,6 +123,54 @@ configure_git() {
     cat ~/.ssh/id_rsa.pub
 }
 
+install_font() {
+  #  mkdir -p ./fontss
+   # wget -O CascadiaCode.zip "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/CascadiaCode.zip" && unzip -j CascadiaCode.zip '*Mono*' -d ./fontss
+    # rm CascadiaCode.zip
+
+
+#!/bin/bash
+#!/bin/bash
+
+# Create the fonts directory if it doesn't exist
+mkdir -p ./fonts
+
+# Download the archive and extract only the files with 'Mono' in their name
+wget -O CascadiaCode.zip "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/CascadiaCode.zip" && unzip -j CascadiaCode.zip '*Mono*' -d ./fonts && rm CascadiaCode.zip
+
+# Get the full path to the fonts directory in WSL
+fonts_path=$(pwd)/fonts
+
+# Convert the Unix path to a Windows path, replace '/mnt/' with the drive letter and change slashes
+win_fonts_path=$(echo $fonts_path | sed -e 's/^\/mnt\///' -e 's/\//\\/g')
+
+
+# Use PowerShell to install the fonts directly from the WSL path
+
+# Use PowerShell to install the fonts directly from the WSL path
+wsl_dist_name="Ubuntu-LX"  # Set your WSL distribution name
+
+# Use PowerShell to install the fonts directly from the WSL path
+fonts_path=$(pwd)/fonts  # This gets the full path to ./fonts
+win_fonts_path=$(echo $fonts_path | sed 's/^\///' | sed 's/\//\\/g')  # Adjusted conversion for WSL path
+# No need to convert fonts_path here as we use the WSL path directly in PowerShell
+
+# Use PowerShell to install the fonts directly from the WSL path
+powershell.exe -Command "& {
+    \$fontDir = 'C:\\Windows\\Fonts';
+    Get-ChildItem -Path '\\\wsl.localhost\\${wsl_dist_name}\\home\\lx\\dotfiles\\fonts\\*.ttf' | ForEach-Object {
+        \$fontPath = \$_;
+        \$destPath = Join-Path -Path \$fontDir -ChildPath \$fontPath.Name;
+        Copy-Item -Path \$fontPath.FullName -Destination \$destPath;
+        Write-Host \"Copied \$fontPath to \$destPath\";
+        # Note: Uncomment and understand the following lines before running them
+        #\$regPath = \"HKLM:\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Fonts\";
+        #\$fontName = [System.IO.Path]::GetFileNameWithoutExtension(\$fontPath.Name) + ' (TrueType)';
+        #Set-ItemProperty -Path \$regPath -Name \$fontName -Value \$fontPath.Name;
+    }
+}"
+}
+
 ensure_not_root
 ensure_default_user
 install_packages
@@ -130,6 +178,7 @@ stow_configs
 install_oh_my_posh
 install_packer_nvim
 install_lazygit
+install_font
 configure_git
 
 # Sourcing the updated files to apply changes

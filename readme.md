@@ -35,8 +35,6 @@ Install the new Powershell from the windows store and run it as an administrator
 winget install JanDeDobbeleer.OhMyPosh -s winget
 Install-Module -Name Terminal-Icons -Repository PSGallery
 ```
-
-Add `./assets/CaskaydiaCoveNerdFontMono-Regular.ttf` to windows fonts\
 Edit the `settings.json` in Windows Terminal with these options for the schemes and profiles being used.
 ```json
 {

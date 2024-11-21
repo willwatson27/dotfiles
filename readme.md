@@ -29,6 +29,7 @@ wsl -d Ubuntu-Main
 ```
 </details>
 
+
 ### Configure Windows Terminal
 Install the new Powershell from the windows store and run it as an administrator
 ```ps

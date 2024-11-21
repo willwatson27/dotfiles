@@ -95,8 +95,9 @@ install_packer_nvim() {
 install_lazygit() {
     if [ ! -f /usr/local/bin/lazygit ]; then
         echo "Installing Lazygit"
-        local latest_version=$(curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep -Po '"tag_name": "\K[^"]*')
-        local download_url="https://github.com/jesseduffield/lazygit/releases/download/${latest_version}/lazygit_${latest_version}_Linux_x86_64.tar.gz"
+        local latest_version=$(curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep -Po '"tag_name": "v\K[^"]*')
+        local download_url="https://github.com/jesseduffield/lazygit/releases/download/v${latest_version}/lazygit_${latest_version}_Linux_x86_64.tar.gz"
+	echo $download_url
         curl -Lo lazygit.tar.gz "$download_url"
         tar xf lazygit.tar.gz lazygit
         sudo install lazygit /usr/local/bin
@@ -123,62 +124,69 @@ configure_git() {
     cat ~/.ssh/id_rsa.pub
 }
 
+get_font() {
+  # Create the fonts directory if it doesn't exist
+  if [ ! -d ./fonts ]; then
+       mkdir -p ./fonts
+       # Download the archive and extract only the files with 'Mono' in their name
+       wget -O CascadiaCode.zip "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/CascadiaCode.zip" && unzip -j CascadiaCode.zip '*Mono*' -d ./fonts && rm CascadiaCode.zip
+  fi
+
+}
+
 install_font() {
-  #  mkdir -p ./fontss
-   # wget -O CascadiaCode.zip "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/CascadiaCode.zip" && unzip -j CascadiaCode.zip '*Mono*' -d ./fontss
-    # rm CascadiaCode.zip
+    # Get the full path to the fonts directory in WSL
+    fonts_path=$(pwd)/fonts
 
+    # Convert the Unix path to a Windows path, replace '/mnt/' with the drive letter and change slashes
+    win_fonts_path=$(echo $fonts_path | sed -e 's/^\/mnt\///' -e 's/\//\\/g')
 
-#!/bin/bash
-#!/bin/bash
+    # Use PowerShell to install the fonts directly from the WSL path
+    wsl_dist_name="Ubuntu-LX"  # Set your WSL distribution name
+    fonts_path=$(pwd)/fonts  # This gets the full path to ./fonts
+    win_fonts_path=$(echo $fonts_path | sed 's/^\///' | sed 's/\//\\/g')  # Adjusted conversion for WSL path
 
-# Create the fonts directory if it doesn't exist
-mkdir -p ./fonts
+    # Use PowerShell to install the fonts directly from the WSL path
+    powershell.exe -Command "& {
+        \$fontDir = 'C:\\Windows\\Fonts';
+        Get-ChildItem -Path '\\\wsl.localhost\\${wsl_dist_name}\\home\\lx\\dotfiles\\fonts\\*.ttf' | ForEach-Object {
+            \$fontPath = \$_;
+            \$destPath = Join-Path -Path \$fontDir -ChildPath \$fontPath.Name;
+            Copy-Item -Path \$fontPath.FullName -Destination \$destPath;
+            Write-Host \"Copied \$fontPath to \$destPath\";
+            # Note: Uncomment and understand the following lines before running them
+            #\$regPath = \"HKLM:\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Fonts\";
+            #\$fontName = [System.IO.Path]::GetFileNameWithoutExtension(\$fontPath.Name) + ' (TrueType)';
+            #Set-ItemProperty -Path \$regPath -Name \$fontName -Value \$fontPath.Name;
+        }
+    }"
+}
 
-# Download the archive and extract only the files with 'Mono' in their name
-wget -O CascadiaCode.zip "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/CascadiaCode.zip" && unzip -j CascadiaCode.zip '*Mono*' -d ./fonts && rm CascadiaCode.zip
-
-# Get the full path to the fonts directory in WSL
-fonts_path=$(pwd)/fonts
-
-# Convert the Unix path to a Windows path, replace '/mnt/' with the drive letter and change slashes
-win_fonts_path=$(echo $fonts_path | sed -e 's/^\/mnt\///' -e 's/\//\\/g')
-
-
-# Use PowerShell to install the fonts directly from the WSL path
-
-# Use PowerShell to install the fonts directly from the WSL path
-wsl_dist_name="Ubuntu-LX"  # Set your WSL distribution name
-
-# Use PowerShell to install the fonts directly from the WSL path
-fonts_path=$(pwd)/fonts  # This gets the full path to ./fonts
-win_fonts_path=$(echo $fonts_path | sed 's/^\///' | sed 's/\//\\/g')  # Adjusted conversion for WSL path
-# No need to convert fonts_path here as we use the WSL path directly in PowerShell
-
-# Use PowerShell to install the fonts directly from the WSL path
-powershell.exe -Command "& {
-    \$fontDir = 'C:\\Windows\\Fonts';
-    Get-ChildItem -Path '\\\wsl.localhost\\${wsl_dist_name}\\home\\lx\\dotfiles\\fonts\\*.ttf' | ForEach-Object {
-        \$fontPath = \$_;
-        \$destPath = Join-Path -Path \$fontDir -ChildPath \$fontPath.Name;
-        Copy-Item -Path \$fontPath.FullName -Destination \$destPath;
-        Write-Host \"Copied \$fontPath to \$destPath\";
-        # Note: Uncomment and understand the following lines before running them
-        #\$regPath = \"HKLM:\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Fonts\";
-        #\$fontName = [System.IO.Path]::GetFileNameWithoutExtension(\$fontPath.Name) + ' (TrueType)';
-        #Set-ItemProperty -Path \$regPath -Name \$fontName -Value \$fontPath.Name;
-    }
-}"
+install_lua53() {
+    if [ ! -d ~/lua53 ]; then
+        echo "Building Lua 5.3.6 from srouce"
+        sudo apt install build-essential libreadline-dev
+        mkdir ~/lua53
+        cd ~/lua53
+        curl -R -O https://www.lua.org/ftp/lua-5.3.6.tar.gz
+        tar zxf lua-5.3.6.tar.gz
+        rm lua-5.3.6.tar.gz
+        cd lua-5.3.6
+        make linux test
+        sudo make install
+    fi
 }
 
 ensure_not_root
 ensure_default_user
 install_packages
 stow_configs
+install_lua53
 install_oh_my_posh
 install_packer_nvim
 install_lazygit
-install_font
+get_font
+# install_font
 configure_git
 
 # Sourcing the updated files to apply changes

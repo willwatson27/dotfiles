@@ -177,6 +177,10 @@ install_lua53() {
     fi
 }
 
+create_hushfile() {
+    touch $HOME/.hushlogin
+}
+
 ensure_not_root
 ensure_default_user
 install_packages
@@ -188,6 +192,7 @@ install_lazygit
 get_font
 # install_font
 configure_git
+create_hushfile
 
 # Sourcing the updated files to apply changes
 [ -f "$HOME/.bashrc" ] && source "$HOME/.bashrc"

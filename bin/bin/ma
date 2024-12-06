@@ -2,44 +2,28 @@
 
 SESSION_NAME="MA"
 SESSION_DIR="$HOME/ma-workspace"
-cd $SESSION_DIR
-tmux
-tmux new-session -d -s $SESSION_NAME
-tmux split-window -h -l 56
-tmux send-keys 'clear ; v .' C-m
-tmux split-window -v -l 10
-tmux send-keys 'clear ; npm start' C-m
+SIDEBAR_WIDTH=55
+SERVER_HEIGHT=3
 
-# SESSION_NAME="MA"
-# SESSION_DIR="$HOME/ma-workspace"
-# SIDEBAR_WIDTH="56"  # Sidebar pane width in columns
-# SIDEBAR_VERT="10"   # Bottom-right pane height in lines
-#
-# # Check if the session already exists
-# tmux has-session -t $SESSION_NAME 2>/dev/null
-# if [ $? -ne 0 ]; then
-#     # Create a new session with one pane
-#     tmux new-session -d -s $SESSION_NAME -n 'root' -c $SESSION_DIR
-#
-#     # Pane 1: Main working area (default)
-#     tmux send-keys -t $SESSION_NAME:root 'clear ; v .' C-m
-#
-#     # Split Pane 1 horizontally to create Pane 2 (Right sidebar)
-#     tmux select-pane -t $SESSION_NAME:root.1
-#     tmux split-window -h -l $SIDEBAR_WIDTH -c $SESSION_DIR
-#
-#     # Pane 2: Right sidebar
-#     tmux send-keys 'clear ; npm start' C-m
-#
-#     # Split Pane 2 vertically to create Pane 3 (Bottom-right)
-#     tmux split-window -v -l $SIDEBAR_VERT -c $SESSION_DIR
-#
-#     # Pane 3: Bottom-right
-#     tmux send-keys 'clear ; npm run server' C-m
-#
-#     # Focus back on the main pane (Pane 1)
-#     tmux select-pane -t $SESSION_NAME:root.1
-# fi
-#
-# # Attach to the session
-# tmux attach-session -t $SESSION_NAME
+tmux has-session -t $SESSION_NAME 2>/dev/null
+if [ $? -ne 0 ]; then
+    # CREATE SESSION
+    set -- $(stty size)  # $1 = rows $2 = columns
+    tmux new-session -d -n ma2 -s $SESSION_NAME -c $SESSION_DIR -x "$2" -y "$(($1 - 1))" # status line uses a row
+    # NVIM
+    tmux send-keys -t $SESSION_NAME:ma2.1 'clear ; v .' C-m
+    # BUILD SYSTEM
+    tmux split-window -t $SESSION_NAME:ma2.1 -c $SESSION_DIR -h
+    tmux resize-pane -t $SESSION_NAME:ma2.2 -x $SIDEBAR_WIDTH
+    tmux send-keys -t $SESSION_NAME:ma2.2 'clear ; npm start' C-m
+    # RESOLUME PROXY
+    tmux split-window -t $SESSION_NAME:ma2.2 -c $SESSION_DIR -v
+    tmux resize-pane -t $SESSION_NAME:ma2.3 -y $SERVER_HEIGHT
+    tmux send-keys -t $SESSION_NAME:ma2.3 'clear ; node ./server' C-m
+    # EXTRA WINDOW
+    tmux new-window -d -c $SESSION_DIR
+    # FOCUS NVIM
+    tmux select-pane -t $SESSION_NAME:ma2.1
+fi
+
+tmux attach-session -t $SESSION_NAME -c $SESSION_DIR
